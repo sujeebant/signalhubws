@@ -3,7 +3,7 @@ const through2 = require('through2')
 const inherits = require('inherits')
 const WebSocket = (typeof window !== 'undefined' && window.WebSocket) ? window.WebSocket : null
 
-function SignalhubWs (app, urls, WebSocketClass) {
+function SignalhubWs (app, urls, WebSocketClass, errorHandler) {
   this.opened = false
   this.sockets = []
   this.app = app
@@ -43,6 +43,12 @@ function SignalhubWs (app, urls, WebSocketClass) {
     socket.addEventListener('message', (message) => {
       this.onMessage(message)
     })
+
+    if (errorHandler) {
+      socket.addEventListener('error', (error) => {
+        errorHandler(error)
+      })
+    }
   }
 }
 
@@ -174,9 +180,9 @@ SignalhubWs.prototype._closeChannels = function (cb) {
   }
 }
 
-module.exports = function (app, urls, WebSocketClass = WebSocket) {
+module.exports = function (app, urls, WebSocketClass = WebSocket, errorHandler) {
   if (!WebSocketClass) {
     throw TypeError('No WebSocket class given.')
   }
-  return new SignalhubWs(app, urls, WebSocketClass)
+  return new SignalhubWs(app, urls, WebSocketClass, errorHandler)
 }
